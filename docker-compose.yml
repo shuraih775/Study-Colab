@@ -1,0 +1,110 @@
+
+services:
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: study-postgres
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init/postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - study-net
+    restart: always
+
+  minio:
+    image: minio/minio
+    container_name: study-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001" 
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_CORS_ALLOW_ORIGINS: "http://localhost:3000"
+    volumes:
+      - minio_data:/data
+    networks:
+      - study-net
+    restart: always
+
+  
+  file-service:
+    container_name: study-file-service
+    build:
+      context: .
+      dockerfile: file-service/Dockerfile
+    ports:
+      - "9090:9090" 
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+     
+    depends_on:
+      - minio
+      - postgres
+    networks:
+      - study-net
+    restart: on-failure
+
+  core-service:
+    container_name: study-core-service
+    build:
+      context: .
+      dockerfile: core-service/Dockerfile
+    ports:
+      - "8080:8080" 
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_PORT=${POSTGRES_PORT}
+
+      - FILE_SERVICE_ADDR=file-service:9090
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - postgres
+      - file-service
+    networks:
+      - study-net
+    restart: on-failure
+
+
+  frontend:
+    container_name: study-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - INTERNAL_API_URL=${INTERNAL_API_URL}
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - core-service
+    networks:
+      - study-net
+
+
+volumes:
+  pg_data:
+  minio_data:
+
+networks:
+  study-net:
+    driver: bridge

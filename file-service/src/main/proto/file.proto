@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package file;
+
+option java_multiple_files = true;
+option java_package = "com.studycollab.file_service.proto";
+option java_outer_classname = "FileServiceProto";
+
+service FileService {
+  rpc GenerateUploadUrl (UploadRequest) returns (UploadResponse);
+  rpc GenerateDownloadUrl (DownloadRequest) returns (DownloadResponse);
+}
+
+message UploadRequest {
+  string filename = 1;
+  string contentType = 2;
+}
+
+message UploadResponse {
+  string presignedUrl = 1;
+  string fileId = 2;
+}
+
+message DownloadRequest {
+  string fileId = 1;
+}
+
+message DownloadResponse {
+  string presignedUrl = 1;
+}
