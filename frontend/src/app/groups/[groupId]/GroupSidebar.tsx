@@ -9,10 +9,9 @@ import {
   UserPlus, 
   Settings,
   Users,
-  BarChart3 // Placeholder for logo
+  BarChart3 
 } from 'lucide-react'
 
-// Skeleton Loader for when group isn't loaded yet
 function SidebarSkeleton() {
   return (
     <nav className="w-64 bg-white p-6 border-r flex flex-col justify-between shadow-lg">
@@ -43,7 +42,6 @@ export default function GroupSidebar({ groupId }: { groupId: string }) {
     { href: `/groups/${groupId}/chat`, label: 'Chat', icon: MessageCircle },
     { href: `/groups/${groupId}/tasks`, label: 'Tasks', icon: ListTodo },
     { href: `/groups/${groupId}/members`, label: 'Members', icon: Users },
-    // Conditionally include 'Join Requests' only if the group is private
     ...(group.type === 'private' 
       ? [{ href: `/groups/${groupId}/join-requests`, label: 'Join Requests', icon: UserPlus }] 
       : []),
@@ -92,7 +90,6 @@ export default function GroupSidebar({ groupId }: { groupId: string }) {
         </ul>
       </div>
       
-      {/* Footer can be added here if needed */}
     </nav>
   )
 }

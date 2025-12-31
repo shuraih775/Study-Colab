@@ -50,7 +50,6 @@ export default function DiscoverGroups() {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  // Memoized filtering logic
   const filteredGroups = useMemo(() => {
     let groups = [...allGroups];
 
@@ -89,7 +88,8 @@ export default function DiscoverGroups() {
       <div className='flex flex-row justify-between mb-4 mt-4'>
 
       <h1 className="text-3xl font-bold text-gray-800">Discover Groups</h1>
-      <button className='bg-emerald-300 p-4 rounded-lg hover:bg-emerald-400 hover:-translate-y-2 transition-all duration-300'onClick={()=>{setShowModal(true)}}> Create Group</button>
+      
+      <button className='bg-emerald-300 p-4 rounded-lg hover:bg-emerald-400 hover:-translate-y-2 transition-all duration-300 cursor-pointer' onClick={()=>{setShowModal(true)}}> Create Group</button>
 
       </div>
 
@@ -129,9 +129,7 @@ export default function DiscoverGroups() {
   );
 }
 
-/**
- * Search and Filter Bar Component
- */
+
 function FilterBar({ searchQuery, onSearchChange, filters, onFilterChange }) {
   return (
     <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-200 flex flex-col md:flex-row gap-4">
@@ -185,9 +183,7 @@ function FilterBar({ searchQuery, onSearchChange, filters, onFilterChange }) {
   );
 }
 
-/**
- * Group Card Component
- */
+
 function GroupCard({ group, isMember, isPending }) {
   const router = useRouter();
   const {id, name, description, type, members } = group;
@@ -298,9 +294,7 @@ function GroupCard({ group, isMember, isPending }) {
   );
 }
 
-/**
- * Loading Spinner Component
- */
+
 function LoadingSpinner() {
   return (
     <div className="flex justify-center items-center h-64">
@@ -309,9 +303,7 @@ function LoadingSpinner() {
   );
 }
 
-/**
- * Empty State Component
- */
+
 function EmptyState({ query }) {
   return (
     <div className="text-center text-gray-500 mt-20 p-6 bg-gray-50 rounded-lg">

@@ -5,7 +5,9 @@ grpc:
   port: 9091
 
 minio:
-  endpoint: {MINIO_ENDPOINT}
-  access-key: {MINIO_ACCESS_KEY}
-  secret-key: {MINIO_SECRET_KEY}
-  bucket: {MINIO_PRIVATE_BUCKET}
+  internal-endpoint: ${MINIO_ENDPOINT}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket: ${MINIO_PRIVATE_BUCKET}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT}
+  minio-region: ${MINIO_REGION}

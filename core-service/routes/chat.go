@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterChatRoutes(router *gin.Engine) {
+func RegisterChatRoutes(router *gin.Engine, chatHandler *controllers.ChatHandler) {
 	chat := router.Group("/chat")
 	chat.Use(middlewares.JWTAuthMiddleware())
 
-	chat.GET("", controllers.HandleConnection)
+	chat.GET("", chatHandler.HandleConnection)
 }

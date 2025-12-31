@@ -11,6 +11,9 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	server "core-service/controllers"
+	"core-service/internal/file"
 )
 
 func main() {
@@ -20,6 +23,22 @@ func main() {
 		fmt.Println("automigrate failed")
 
 	}
+
+	grpcConfig := file.FileClientConfig{
+		Addr:        os.Getenv("FILE_SERVICE_ADDR"),
+		InternalKey: os.Getenv("FILE_SERVICE_KEY"),
+	}
+
+	fileClient, err := file.NewFileClient(grpcConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to gRPC server: %v", err)
+	}
+
+	chatServer := server.NewServer(fileClient)
+	go chatServer.Run()
+
+	ChatHandler := server.NewChatHandler(chatServer)
+
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -36,8 +55,8 @@ func main() {
 	routes.RegisterAuthRoutes(r)
 	routes.RegisterGroupRoutes(r)
 	routes.RegisterUserRoutes(r)
-	routes.RegisterChatRoutes(r)
-	routes.RegisterMaterialRoutes(r)
+	routes.RegisterChatRoutes(r, ChatHandler)
+	routes.RegisterMaterialRoutes(r, fileClient)
 	r.Static("/uploads", "./uploads")
 
 	port := os.Getenv("PORT")

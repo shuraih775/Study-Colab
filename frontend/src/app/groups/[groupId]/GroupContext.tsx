@@ -7,22 +7,20 @@ interface Group {
   id: string
   name: string
   type: 'public' | 'private'
-  description?: string // Added description
+  description?: string 
 }
 
 interface GroupContextType {
   group: Group | null
-  setGroup: (group: Group | null) => void // Allow setting to null
+  setGroup: (group: Group | null) => void 
 }
 
 const GroupContext = createContext<GroupContextType | undefined>(undefined)
 
 export const GroupProvider = ({ groupId, children, initialGroup }: { groupId: string, children: ReactNode, initialGroup?: Group }) => {
-  // Use initialGroup if provided, otherwise null
   const [group, setGroup] = useState<Group | null>(initialGroup || null)
 
   useEffect(() => {
-    // Only fetch if we don't have initial data
     if (initialGroup) {
       setGroup(initialGroup);
       return;
@@ -33,10 +31,10 @@ export const GroupProvider = ({ groupId, children, initialGroup }: { groupId: st
         const response = await axios.get(`http://localhost:8080/groups/${groupId}`, {
           withCredentials: true
         })
-        setGroup(response.data) // Assuming API returns { group: ... }
+        setGroup(response.data) 
       } catch (error) {
         console.error("Failed to fetch group info:", error)
-        setGroup(null) // Set to null on error
+        setGroup(null)
       }
     }
     

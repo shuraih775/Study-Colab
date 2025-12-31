@@ -27,7 +27,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_CORS_ALLOW_ORIGINS: "http://localhost:3000"
+      MINIO_BROWSER_CORS_ALLOW_ORIGINS: ${MINIO_CORS_ALLOW_ORIGIN}
     volumes:
       - minio_data:/data
     networks:
@@ -42,12 +42,14 @@ services:
       dockerfile: file-service/Dockerfile
     ports:
       - "9090:9090" 
+      - "9091:9091"
     environment:
-      - MINIO_ENDPOINT=http://minio:9000
-      
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_PUBLIC_ENDPOINT=${MINIO_PUBLIC_ENDPOINT}
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
-      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - MINIO_PRIVATE_BUCKET=${MINIO_BUCKET_NAME}
+      - MINIO_REGION=${MINIO_REGION}
      
     depends_on:
       - minio
@@ -70,7 +72,7 @@ services:
       - DB_NAME=${POSTGRES_DB}
       - DB_PORT=${POSTGRES_PORT}
 
-      - FILE_SERVICE_ADDR=file-service:9090
+      - FILE_SERVICE_ADDR=file-service:9091
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - postgres
@@ -99,7 +101,6 @@ services:
       - core-service
     networks:
       - study-net
-
 
 volumes:
   pg_data:

@@ -11,7 +11,6 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-amber-400 via-teal-200 to-amber-400 text-center px-6">
 
-      {/* Floating Gradient Background Animation */}
       <motion.div
         className="absolute w-[40rem] h-[40rem] bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
         animate={{
@@ -63,7 +62,7 @@ export default function HomePage() {
             <p className='font-small'>Log In</p>
           </GlowingButton>
 
-          <GlowingButton onClick={()=>{router.push('/auth/login')}} className='px-3 py-1'>
+          <GlowingButton onClick={()=>{router.push('/auth/register')}} className='px-3 py-1'>
                               <p className='font-small'>Register</p>
       
                       </GlowingButton>

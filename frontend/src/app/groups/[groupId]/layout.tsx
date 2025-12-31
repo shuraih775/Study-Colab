@@ -31,10 +31,9 @@ export default async function GroupLayout({ children, params }) {
     notFound()
   }
 
-  const { status, group } = data; // Group info is now fetched here
+  const { status, group } = data; 
 
   if (status === "not_a_member") {
-    // Pass the fetched group info to JoinLayout
     return <JoinLayout groupId={groupId} token={token} groupInfo={group} />
   }
 
@@ -55,12 +54,10 @@ export default async function GroupLayout({ children, params }) {
     )
   }
 
-  // User is a member, render the group layout
   return (
     <GroupProvider groupId={groupId} initialGroup={group}>
       <div className="flex min-h-screen">
         <GroupSidebar groupId={groupId} />
-        {/* Changed to bg-gray-50 for consistency */}
         <main className="flex-1 p-6 md:p-10 bg-gray-50 overflow-y-auto">
           {children}
         </main>

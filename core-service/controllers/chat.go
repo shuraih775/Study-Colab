@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+
+	"core-service/internal/file"
 )
 
 const (
@@ -30,8 +32,12 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+type ChatHandler struct {
+	server *Server
+}
+
 type ClientAttachmentDTO struct {
-	FileURL  string `json:"file_url"`
+	FileID   string `json:"file_id"`
 	FileName string `json:"file_name"`
 	FileType string `json:"file_type"`
 	FileSize int64  `json:"file_size"`
@@ -96,6 +102,10 @@ func newHub(roomID string, server *Server) *Hub {
 	}
 }
 
+func NewChatHandler(server *Server) *ChatHandler {
+	return &ChatHandler{server: server}
+}
+
 func (h *Hub) run() {
 	defer func() { log.Printf("Hub %s stopped", h.roomID) }()
 	for {
@@ -135,15 +145,17 @@ type Server struct {
 	register   chan *Client
 	unregister chan *Client
 	mutex      sync.RWMutex
+	fileClient *file.Client
 }
 
-func newServer() *Server {
+func NewServer(fileClient *file.Client) *Server {
 	return &Server{
 		hubs:       make(map[string]*Hub),
 		clients:    make(map[*Client]bool),
 		broadcast:  make(chan *ClientMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
+		fileClient: fileClient,
 	}
 }
 
@@ -198,10 +210,17 @@ func (s *Server) fetchHistory(client *Client, roomID string) {
 
 func (s *Server) sendSingleMessageToClient(client *Client, msg *models.ChatMessage) {
 	var attDTOs []ServerAttachmentDTO
+
 	for _, att := range msg.Attachments {
+		downloadURL, err := s.fileClient.GenerateDownloadURL(att.FileID)
+		if err != nil {
+			log.Printf("failed to generate download URL: %v", err)
+			continue
+		}
+
 		attDTOs = append(attDTOs, ServerAttachmentDTO{
 			ID:       att.ID.String(),
-			FileURL:  att.FileURL,
+			FileURL:  downloadURL,
 			FileType: att.FileType,
 			FileSize: att.FileSize,
 		})
@@ -216,12 +235,7 @@ func (s *Server) sendSingleMessageToClient(client *Client, msg *models.ChatMessa
 	}
 
 	msgBytes, _ := json.Marshal(serverMsg)
-
-	select {
-	case client.send <- msgBytes:
-	default:
-		log.Printf("Buffer full for client %s", client.UserID)
-	}
+	client.send <- msgBytes
 }
 
 func (s *Server) saveMessage(client *Client, roomID string, text string, clientAtts []ClientAttachmentDTO) (*models.ChatMessage, error) {
@@ -239,7 +253,7 @@ func (s *Server) saveMessage(client *Client, roomID string, text string, clientA
 
 	for _, att := range clientAtts {
 		msg.Attachments = append(msg.Attachments, models.Attachment{
-			FileURL:  att.FileURL,
+			FileID:   att.FileID,
 			FileType: att.FileType,
 			FileSize: att.FileSize,
 		})
@@ -254,7 +268,7 @@ func (s *Server) saveMessage(client *Client, roomID string, text string, clientA
 	return msg, err
 }
 
-func (s *Server) run() {
+func (s *Server) Run() {
 	for {
 		select {
 		case client := <-s.register:
@@ -299,9 +313,13 @@ func (s *Server) run() {
 
 						var attDTOs []ServerAttachmentDTO
 						for _, att := range savedMsg.Attachments {
+							url, err := s.fileClient.GenerateDownloadURL(att.FileID)
+							if err != nil {
+								continue
+							}
 							attDTOs = append(attDTOs, ServerAttachmentDTO{
 								ID:       att.ID.String(),
-								FileURL:  att.FileURL,
+								FileURL:  url,
 								FileType: att.FileType,
 								FileSize: att.FileSize,
 							})
@@ -376,13 +394,7 @@ func (c *Client) writePump() {
 	}
 }
 
-var ChatServer = newServer()
-
-func init() {
-	go ChatServer.run()
-}
-
-func HandleConnection(c *gin.Context) {
+func (h *ChatHandler) HandleConnection(c *gin.Context) {
 	userIDVal, _ := c.Get("user_id")
 	userVal, _ := c.Get("user")
 
@@ -395,7 +407,7 @@ func HandleConnection(c *gin.Context) {
 	}
 
 	client := &Client{
-		server:   ChatServer,
+		server:   h.server,
 		conn:     conn,
 		send:     make(chan []byte, 256),
 		rooms:    make(map[string]bool),
@@ -403,7 +415,7 @@ func HandleConnection(c *gin.Context) {
 		Username: userModel.Username,
 	}
 
-	ChatServer.register <- client
+	h.server.register <- client
 	go client.writePump()
 	go client.readPump()
 }

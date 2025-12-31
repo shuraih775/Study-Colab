@@ -5,15 +5,11 @@ import { Send, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import axios from 'axios'
 
-// --- CONFIGURATION ---
-
-// --- AUTHENTICATION PLACEHOLDER ---
 const FAKE_CURRENT_USER = { 
   id: 'currentUser', 
   name: 'You'        
 }
 
-// --- INTERFACES (Matching Go Backend DTOs) ---
 interface User {
   id: string;
   name: string;
@@ -30,7 +26,7 @@ interface Message {
   id: string;
   user: User;
   text: string;
-  attachments: Attachment[]; // Array of file references
+  attachments: Attachment[]; 
   timestamp: string;
 }
 
@@ -50,7 +46,6 @@ export default function GroupChatPage({ params }: { params: { groupId: string } 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // 1. Connect to WebSocket
   useEffect(() => {
     ws.current = new WebSocket("ws://localhost:8080/chat")
 
@@ -77,12 +72,10 @@ export default function GroupChatPage({ params }: { params: { groupId: string } 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // 2. The Upload Logic (HTTP Step)
 
 
 const uploadFileToMinIO = async (file: File) => {
   try {
-    // A. Get Presigned URL from Backend
     const res = await axios.post(`http://localhost:8080/materials/presigned-url`, 
       {
         file_name: file.name,
@@ -96,20 +89,14 @@ const uploadFileToMinIO = async (file: File) => {
       }
     );
 
-    // Axios stores the response body in .data (no need for .json())
-    const { upload_url, public_url, key } = res.data;
+    const { upload_url, file_id } = res.data;
 
-    // B. Upload directly to MinIO/S3 using the presigned URL
-    // Note: We typically do NOT use withCredentials for the S3 upload itself, 
-    // as the signature in the URL handles auth.
-    await axios.put(upload_url, file, {
-      headers: {
-        // CRITICAL: This must match what you sent to the backend
-        'Content-Type': file.type 
-      }
-    });
+await axios.put(upload_url, file, {
+  headers: { 'Content-Type': file.type }
+});
 
-    return { public_url, key };
+return { file_id };
+
 
   } catch (error) {
     console.error("Upload error:", error);
@@ -118,14 +105,12 @@ const uploadFileToMinIO = async (file: File) => {
   }
 }
 
-  // 3. Send Message Handler
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if ((newMessage.trim() === '' && !selectedFile) || !ws.current) return
 
     let attachmentsPayload: any[] = []
 
-    // If there is a file, upload it first (Blocking operation)
     if (selectedFile) {
       setIsUploading(true)
       const result = await uploadFileToMinIO(selectedFile)
@@ -133,26 +118,27 @@ const uploadFileToMinIO = async (file: File) => {
 
       if (result) {
         attachmentsPayload.push({
-            file_url: result.public_url,
-            file_type: selectedFile.type,
-            file_size: selectedFile.size
-        })
+        file_id: result.file_id,
+        file_name: selectedFile.name,
+        file_type: selectedFile.type,
+        file_size: selectedFile.size
+      })
+
       } else {
-        return // Stop if upload failed
+        return 
       }
     }
 
-    // Construct WebSocket Payload
     const messagePayload = {
-      type: 'broadcast',
-      room: groupId,
-      text: newMessage,
-      attachments: attachmentsPayload // The array of uploaded file URLs
-    }
+  type: 'broadcast',
+  room: groupId,
+  text: newMessage,
+  attachments: attachmentsPayload
+}
+
     
     ws.current.send(JSON.stringify(messagePayload))
     
-    // Reset UI
     setNewMessage('')
     setSelectedFile(null)
   }
@@ -198,12 +184,11 @@ const uploadFileToMinIO = async (file: File) => {
                           {att.file_type.startsWith('image/') ? (
                             // IMAGE PREVIEW
                             <img 
-                              src={att.file_url} 
+                              src={att.file_id} 
                               alt="attachment" 
                               className="rounded-lg max-h-60 object-cover border border-white/20"
                             />
                           ) : (
-                            // GENERIC FILE LINK
                             <a 
                               href={att.file_url} 
                               target="_blank"

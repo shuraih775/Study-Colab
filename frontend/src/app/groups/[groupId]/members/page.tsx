@@ -14,15 +14,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import axios from 'axios';
 
-// --- !! SETTINGS FOR DEMO !! ---
-// These would be dynamic in a real app
-const CURRENT_USER_ID = 'u1'; // 'u1' is an admin, 'u2' is a member
-const CURRENT_USER_ROLE = 'admin'; // 'admin' or 'member'
-// --- END MOCK DATA ---
+const CURRENT_USER_ID = 'u1'; // 
+const CURRENT_USER_ROLE = 'admin'; 
 
-/**
- * Main Group Members Page Component
- */
 export default function GroupMembersPage({params}) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,9 +37,8 @@ export default function GroupMembersPage({params}) {
     } finally {
       setLoading(false);
     }
-  }, [groupId]); // Add groupId as a dependency
+  }, [groupId]); 
 
-  // This function now constructs the correct payload for the backend
   const updateUser = async (operation, userId) => {
     let payload = {};
 
@@ -57,7 +50,6 @@ export default function GroupMembersPage({params}) {
         payload = { role: 'member' };
         break;
       case 'Kick':
-        // Assuming 'kicked' is the status your backend will use to remove a member
         payload = { status: 'kicked' };
         break;
       default:
@@ -67,28 +59,23 @@ export default function GroupMembersPage({params}) {
 
     try {
       await axios.put(`http://localhost:8080/groups/${groupId}/members/${userId}`, payload, { withCredentials: true });
-      // Refresh the member list after a successful action
       await getMembers(); 
     } catch (err) {
       console.error(err);
-      // You could set an error state here to show the user the update failed
       setError(`Failed to ${operation.toLowerCase()} member.`);
     }
   };
 
-  // Fetch data on component mount
   useEffect(() => {
-    if (groupId) { // Only fetch if groupId is available
+    if (groupId) { 
       getMembers();
     }
-  }, [getMembers, groupId]); // Add getMembers and groupId as dependencies
+  }, [getMembers, groupId]); 
 
-  // Memoized filtering logic
   const filteredMembers = useMemo(() => {
     if (!searchQuery) return members;
     
     return members.filter(member =>
-      // Assuming 'username' is the field to search
       member.username && member.username.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [members, searchQuery]);
@@ -133,8 +120,8 @@ export default function GroupMembersPage({params}) {
           <MemberCard
             key={member.id}
             member={member}
-            isCurrentUser={member.id === CURRENT_USER_ID} // Use dynamic current user ID
-            currentUserIsAdmin={CURRENT_USER_ROLE === 'admin'} // Use dynamic current user role
+            isCurrentUser={member.id === CURRENT_USER_ID} 
+            currentUserIsAdmin={CURRENT_USER_ROLE === 'admin'} 
             onAction={updateUser}
           />
         ))}
@@ -168,11 +155,7 @@ export default function GroupMembersPage({params}) {
   );
 }
 
-/**
- * Individual Member Card Component
- */
 function MemberCard({ member, isCurrentUser, currentUserIsAdmin, onAction }) {
-  // Use 'id' from the member object for consistency, assuming it's the user ID
   const { id, username, role, joined_at, avatarUrl, email } = member;
   const initial = username ? username.split(' ').map(n => n[0]).join('') : '?';
 
@@ -257,9 +240,7 @@ function MemberCard({ member, isCurrentUser, currentUserIsAdmin, onAction }) {
   );
 }
 
-/**
- * Role Badge Component
- */
+
 function RoleBadge({ role }) {
   if (role === 'admin') {
     return (

@@ -5,7 +5,6 @@ import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import { Loader2, AlertCircle, LogIn, Users, Lock } from 'lucide-react' // Added icons
 
-// We now receive groupInfo from GroupLayout.tsx
 export default function JoinLayout({ groupId, token, groupInfo }: { groupId: string, token?: string, groupInfo?: any }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

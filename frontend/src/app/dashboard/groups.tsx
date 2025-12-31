@@ -2,22 +2,23 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import {
-  Users,   // For members
-  Hash,    // For group type
-  Plus,    // For "Create" button
-  AlertCircle, // For error message
-  Loader2  // For loading spinner
+  Users,   
+  Hash,   
+  Plus,    
+  AlertCircle, 
+  Loader2  
 } from 'lucide-react';
+import CreateGroupsModal from '../../components/Modals/CreateGroupModal';
 
-/**
- * Main Groups Page Component
- * Handles fetching data and displaying loading/error/empty/content states.
- */
+
+
 export default function Groups() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
+  
 
   useEffect(() => {
     const getGroups = async () => {
@@ -27,7 +28,7 @@ export default function Groups() {
         const response = await axios.get(`http://localhost:8080/user/groups`, {
           withCredentials: true
         });
-        setGroups(response.data.groups || []); // Ensure groups is always an array
+        setGroups(response.data.groups || []); 
       } catch (err) {
         console.error("Failed to fetch groups:", err);
         setError("Could not load your groups. Please try again later.");
@@ -39,7 +40,6 @@ export default function Groups() {
     getGroups();
   }, []);
 
-  // 1. Loading State
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -48,7 +48,6 @@ export default function Groups() {
     );
   }
 
-  // 2. Error State
   if (error) {
     return (
       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-3">
@@ -58,19 +57,16 @@ export default function Groups() {
     );
   }
 
-  // 3. Main Content
   return (
     <div>
-      {/* Header: Title + Create Button */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">My Groups</h1>
-        <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-medium">
+        <button className="bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-emerald-600 transition-all duration-300 flex items-center gap-2 font-medium cursor-pointer" onClick={()=>{setShowModal(true)}}>
           <Plus size={18} />
           <span>Create Group</span>
         </button>
       </div>
 
-      {/* 4. Empty State */}
       {groups.length === 0 ? (
         <div className="text-center text-gray-500 mt-20 p-6 bg-gray-100 rounded-lg">
           <h3 className="text-xl font-semibold mb-2">No Groups Yet</h3>
@@ -85,15 +81,14 @@ export default function Groups() {
           ))}
         </div>
       )}
+            {showModal && <CreateGroupsModal open={showModal} onClose={()=>{setShowModal(false)}}/> }
+      
     </div>
   );
 }
 
-/**
- * Presentational Component for a single Group Card
- */
+
 function GroupCard({ group, router }) {
-  // Get the first letter of the group name for the avatar
   const initial = group.name ? group.name[0].toUpperCase() : '?';
 
   return (

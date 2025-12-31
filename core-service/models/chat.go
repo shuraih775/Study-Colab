@@ -23,14 +23,15 @@ type ChatMessage struct {
 }
 
 type Attachment struct {
-	ID uuid.UUID `gorm:"type:uuid;primary_key"`
+	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
 
 	ChatMessageID uuid.UUID `gorm:"type:uuid;index"`
 
-	FileURL string `gorm:"type:text;not null"`
+	FileID string `gorm:"type:text;not null"`
 
-	FileType string `gorm:"type:varchar(50)"` // e.g., "image/jpeg"
-	FileSize int64  `gorm:"type:bigint"`      // e.g., 102400 (bytes)
+	FileName string `gorm:"type:text"`
+	FileType string `gorm:"type:varchar(50)"`
+	FileSize int64  `gorm:"type:bigint"`
 
 	CreatedAt time.Time
 }

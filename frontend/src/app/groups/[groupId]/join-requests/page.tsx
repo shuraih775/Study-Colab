@@ -19,7 +19,6 @@ export default function GroupJoinRequestsPage({params}: {params: {groupId: strin
       const res = await axios.get(`http://localhost:8080/groups/${groupId}/requests`, {
         withCredentials: true,
       })
-      // Assuming res.data is the array of requests
       setRequests(res.data || [])
     } catch (err) {
       console.error(err)
@@ -34,15 +33,13 @@ export default function GroupJoinRequestsPage({params}: {params: {groupId: strin
   }, [getRequests])
 
   const handleRequest = async (userId: string, action: 'accept' | 'reject') => {
-    // Optimistically remove from list for faster UI feedback
     setRequests(currentRequests => currentRequests.filter(req => req.id !== userId))
     
     try {
       if (action === 'accept') {
-        // This is an UPDATE action, setting status to 'active'
         await axios.put(
           `http://localhost:8080/groups/${groupId}/requests/${userId}`,
-          { status: 'active' }, // Send body to update status
+          { status: 'active' }, /
           { withCredentials: true }
         )
       } else {
@@ -52,17 +49,11 @@ export default function GroupJoinRequestsPage({params}: {params: {groupId: strin
           { withCredentials: true }
         )
       }
-      // Optional: Re-fetch to ensure consistency after action
-      // getRequests(); 
-      // Note: We are already optimistically removing. If the API call fails,
-      // we should add the request back or show an error toast.
-      // For simplicity, we'll just log the error if it fails.
+      
       
     } catch (err) {
       console.error(`Failed to ${action} request:`, err)
-      // If the API call fails, re-fetch to get the correct state
       getRequests()
-      // You could also show a toast notification here
     }
   }
 
@@ -113,9 +104,7 @@ export default function GroupJoinRequestsPage({params}: {params: {groupId: strin
                   <div className="text-sm text-gray-500">{req.email}</div>
                   <div className="text-sm text-gray-400 flex items-center gap-1 mt-1">
                     <Clock size={14} />
-                    {/* <span>
-                      Requested {formatDistanceToNow(new Date(req.requestedAt), { addSuffix: true })}
-                    </span> */}
+                    {
                   </div>
                 </div>
               </div>

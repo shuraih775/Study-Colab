@@ -1,14 +1,11 @@
 package com.studycollab.file_service.service;
 
-import com.studycollab.file_service.proto.DownloadRequest;
-import com.studycollab.file_service.proto.DownloadResponse;
-import com.studycollab.file_service.proto.UploadRequest;
-import com.studycollab.file_service.proto.UploadResponse;
+import com.studycollab.file_service.config.MinioConfig;
+import com.studycollab.file_service.proto.*;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -16,50 +13,55 @@ import java.util.UUID;
 @Service
 public class MinioFileService {
 
-    @Autowired
-    private MinioClient client;
+    private final MinioClient publicClient;
+    private final MinioConfig config;
 
-    @Value("${minio.bucket}")
-    private String bucket;
+    public MinioFileService(
+            @Qualifier("publicMinio") MinioClient publicClient,
+            MinioConfig config
+    ) {
+        this.publicClient = publicClient;
+        this.config = config;
+    }
 
     public UploadResponse generateUpload(UploadRequest req) {
         String fileId = UUID.randomUUID().toString();
 
-        String presigned;
         try {
-            presigned = client.getPresignedObjectUrl(
-                GetPresignedObjectUrlArgs.builder()
-                    .method(Method.PUT)
-                    .bucket(bucket)
-                    .object(fileId)
-                    .build()
+            String url = publicClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.PUT)
+                            .bucket(config.getBucket())
+                            .object(fileId)
+                            .build()
             );
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        return UploadResponse.newBuilder()
-                .setPresignedUrl(presigned)
-                .setFileId(fileId)
-                .build();
+            return UploadResponse.newBuilder()
+                    .setFileId(fileId)
+                    .setPresignedUrl(url)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate upload URL", e);
+        }
     }
 
     public DownloadResponse generateDownload(DownloadRequest req) {
-        String presigned;
         try {
-            presigned = client.getPresignedObjectUrl(
-                GetPresignedObjectUrlArgs.builder()
-                    .method(Method.GET)
-                    .bucket(bucket)
-                    .object(req.getFileId())
-                    .build()
+            String url = publicClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(config.getBucket())
+                            .object(req.getFileId())
+                            .build()
             );
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        return DownloadResponse.newBuilder()
-                .setPresignedUrl(presigned)
-                .build();
+            return DownloadResponse.newBuilder()
+                    .setPresignedUrl(url)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate download URL", e);
+        }
     }
 }
