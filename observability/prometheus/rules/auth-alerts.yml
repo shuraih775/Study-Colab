@@ -1,0 +1,20 @@
+groups:
+- name: auth
+  rules:
+
+  - alert: AuthLoginFailureSpike
+    expr: |
+      rate(auth_login_failure_total[5m])
+      /
+      (
+        rate(auth_login_success_total[5m])
+        +
+        rate(auth_login_failure_total[5m])
+      )
+      > 0.3
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High login failure ratio"
+      description: "More than 30% of login attempts are failing"

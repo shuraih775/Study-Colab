@@ -1,0 +1,23 @@
+groups:
+- name: database
+  rules:
+
+  - alert: DatabaseConnectionPoolExhaustion
+    expr: |
+      db_connections_in_use / db_connections_open > 0.9
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Database connection pool nearly exhausted"
+      description: "More than 90% of DB connections are in use"
+
+  - alert: DatabaseConnectionsLeaking
+    expr: |
+      db_connections_open - db_connections_idle > db_connections_open * 0.8
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Possible DB connection leak"
+      description: "Most DB connections are not being released"

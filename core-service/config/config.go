@@ -2,22 +2,19 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 var DB *gorm.DB
 
-func ConnectDB() {
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Error loading .env file")
-	}
+func ConnectDB() error {
+	_ = godotenv.Load()
 
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
@@ -30,8 +27,16 @@ func ConnectDB() {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("Failed to connect to database")
+		return err
+	}
+
+	if err := db.Use(tracing.NewPlugin(
+		tracing.WithoutMetrics(), // add later if needed
+	)); err != nil {
+		return err
 	}
 
 	DB = db
+
+	return nil
 }

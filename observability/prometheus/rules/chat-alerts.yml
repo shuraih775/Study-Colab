@@ -1,0 +1,23 @@
+groups:
+- name: chat
+  rules:
+
+  - alert: ChatMessagesStopped
+    expr: |
+      rate(chat_messages_sent_total[5m]) == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Chat messages stopped"
+      description: "No chat messages sent in the last 5 minutes"
+
+  - alert: ChatConnectionsDropped
+    expr: |
+      chat_connections_active == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "No active chat connections"
+      description: "All chat WebSocket connections dropped"

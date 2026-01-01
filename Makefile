@@ -2,7 +2,7 @@
 
 # ---------- Core services only ----------
 up:
-	docker compose up -d postgres minio file-service core-service
+	docker compose up -d jaeger elasticsearch postgres minio file-service core-service prometheus grafana alertmanager
 
 # ---------- All services (including frontend) ----------
 up-all:

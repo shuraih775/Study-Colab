@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterAuthRoutes(r *gin.Engine) *gin.Engine {
+func RegisterAuthRoutes(r *gin.Engine) {
 
 	auth := r.Group("/auth")
 	{
@@ -20,5 +20,4 @@ func RegisterAuthRoutes(r *gin.Engine) *gin.Engine {
 		auth.POST("/logout", controllers.Logout)
 	}
 
-	return r
 }

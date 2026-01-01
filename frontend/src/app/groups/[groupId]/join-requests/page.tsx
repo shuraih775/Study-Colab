@@ -39,7 +39,7 @@ export default function GroupJoinRequestsPage({params}: {params: {groupId: strin
       if (action === 'accept') {
         await axios.put(
           `http://localhost:8080/groups/${groupId}/requests/${userId}`,
-          { status: 'active' }, /
+          { status: 'active' }, 
           { withCredentials: true }
         )
       } else {
@@ -103,9 +103,9 @@ export default function GroupJoinRequestsPage({params}: {params: {groupId: strin
                   <div className="font-semibold text-gray-800">{req.user}</div>
                   <div className="text-sm text-gray-500">{req.email}</div>
                   <div className="text-sm text-gray-400 flex items-center gap-1 mt-1">
-                    <Clock size={14} />
-                    {
-                  </div>
+  <Clock size={14} />
+  {req.createdAt ? formatDistanceToNow(new Date(req.createdAt)) : 'Unknown time'} ago
+</div>
                 </div>
               </div>
               {/* Action Buttons */}

@@ -1,0 +1,13 @@
+groups:
+- name: groups
+  rules:
+
+  - alert: GroupJoinsDroppedToZero
+    expr: |
+      rate(groups_joined_total[10m]) == 0
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "No group joins detected"
+      description: "Group join activity has dropped to zero"

@@ -31,7 +31,6 @@ func NewFileClient(cfg FileClientConfig) (*Client, error) {
 
 func (c *Client) getctx() (context.Context, context.CancelFunc) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancelFunc()
 	md := metadata.New(map[string]string{
 		"internal-key": c.cfg.InternalKey,
 	})

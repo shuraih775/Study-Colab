@@ -58,6 +58,95 @@ services:
       - study-net
     restart: on-failure
 
+  
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.4
+    container_name: study-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    networks:
+      - study-net
+    restart: unless-stopped
+    
+  jaeger:
+    image: jaegertracing/jaeger:2.13.0 
+    container_name: study-jaeger-v2
+    depends_on:
+      - elasticsearch
+    ports:
+      - "4317:4317"     
+      # - "4318:4318"     
+      - "16686:16686"   
+   
+    volumes:
+      - ./jaeger-config.yaml:/etc/jaeger/config.yaml
+      - ./ui-config.json:/etc/jaeger/ui-config/ui-config.json
+    command: ["--config", "/etc/jaeger/config.yaml"]
+    networks:
+      - study-net
+    restart: unless-stopped
+ 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules:/etc/prometheus/rules:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9092:9090"
+    networks:
+    - study-net  
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+    - study-net  
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "9093:9093"
+    networks:
+      - study-net
+    restart: unless-stopped
+  
+  alert-receiver:
+    image: python:3.11-slim
+    container_name: alert-receiver
+    working_dir: /app
+    volumes:
+      - ./dev-utils/alert_receiver.py:/app/alert_receiver.py
+    command: >
+      sh -c "pip install fastapi uvicorn &&
+            uvicorn alert_receiver:app --host 0.0.0.0 --port 5001"
+    ports:
+      - "5001:5001"
+    networks:
+      - study-net
+      
   core-service:
     container_name: study-core-service
     build:
@@ -74,12 +163,17 @@ services:
 
       - FILE_SERVICE_ADDR=file-service:9091
       - JWT_SECRET=${JWT_SECRET}
+
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_ENDPOINT}
     depends_on:
       - postgres
       - file-service
+      - jaeger
+      - prometheus
+      - grafana
     networks:
       - study-net
-    restart: on-failure
+    restart: on-failure  
 
 
   frontend:
@@ -105,6 +199,8 @@ services:
 volumes:
   pg_data:
   minio_data:
+  grafana-data:
+
 
 networks:
   study-net:
